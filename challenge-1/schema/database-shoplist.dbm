@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+CAUTION: Do not modify this file unless you know what you are doing.
+         Unexpected results may occur if the code is changed deliberately.
+-->
+<dbmodel pgmodeler-ver="0.9.3-beta" use-changelog="false" last-position="0,0" last-zoom="1" max-obj-count="4"
+	 default-schema="public" default-owner="postgres">
+<database name="shoplist" is-template="false" allow-conns="true">
+</database>
+
+<schema name="public" layer="0" fill-color="#e1e1e1" sql-disabled="true">
+</schema>
+
+<schema name="shoplist" layer="0" rect-visible="true" fill-color="#22d08a">
+	<role name="postgres"/>
+</schema>
+
+<table name="item" layer="0" collapse-mode="2" max-obj-count="3" z-value="0">
+	<schema name="shoplist"/>
+	<role name="postgres"/>
+	<position x="100" y="100"/>
+	<column name="name" not-null="true">
+		<type name="character varying" length="256"/>
+		<comment><![CDATA[the name of the item]]></comment>
+	</column>
+	<column name="in_cart" not-null="true" default-value="true">
+		<type name="bool" length="0"/>
+		<comment><![CDATA[whether it's currently in the cart (needs to be bought)]]></comment>
+	</column>
+	<column name="created_at" not-null="true" default-value="now()">
+		<type name="timestamp" length="0"/>
+	</column>
+	<constraint name="item_pk" type="pk-constr" table="shoplist.item">
+		<columns names="name" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="log" layer="0" collapse-mode="2" max-obj-count="3" z-value="0">
+	<schema name="shoplist"/>
+	<role name="postgres"/>
+	<comment><![CDATA[log of actions performed on the item table]]></comment>
+	<position x="100" y="360"/>
+	<column name="ts" not-null="true">
+		<type name="timestamp" length="0"/>
+		<comment><![CDATA[timestamp of the event]]></comment>
+	</column>
+	<column name="name" not-null="true">
+		<type name="character varying" length="256"/>
+		<comment><![CDATA[name of the item]]></comment>
+	</column>
+	<column name="cart_action" not-null="true">
+		<type name="boolean" length="0"/>
+		<comment><![CDATA[whether the item was added (true) or removed (false)]]></comment>
+	</column>
+</table>
+
+<function name="fn_trg_item_history"
+		window-func="false"
+		returns-setof="false"
+		behavior-type="CALLED ON NULL INPUT"
+		function-type="VOLATILE"
+		security-type="SECURITY INVOKER"
+		execution-cost="1"
+		row-amount="0">
+	<schema name="shoplist"/>
+	<role name="postgres"/>
+	<language name="plpgsql" sql-disabled="true"/>
+	<return-type>
+	<type name="trigger" length="0"/>
+	</return-type>
+	<definition><![CDATA[BEGIN
+	INSERT INTO shoplist.log (ts, name, cart_action)
+	VALUES (now(), NEW.name, NEW.in_cart);
+	RETURN NEW;
+END]]></definition>
+</function>
+
+<index name="idx_log_name" table="shoplist.log"
+	 concurrent="false" unique="false" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="false">
+			<column name="name"/>
+		</idxelement>
+		<idxelement use-sorting="false">
+			<column name="ts"/>
+		</idxelement>
+</index>
+
+<trigger name="trg_item_history" firing-type="AFTER" per-line="true" constraint="false"
+	 ins-event="true" del-event="false" upd-event="true" trunc-event="false"
+	 table="shoplist.item">
+		<function signature="shoplist.fn_trg_item_history()"/>
+</trigger>
+
+<constraint name="fk_log_item_name" type="fk-constr" comparison-type="MATCH FULL"
+	 upd-action="CASCADE" del-action="NO ACTION" ref-table="shoplist.item"
+	deferrable="true" defer-type="INITIALLY IMMEDIATE"
+ table="shoplist.log">
+	<columns names="name" ref-type="src-columns"/>
+	<columns names="name" ref-type="dst-columns"/>
+</constraint>
+
+<relationship name="rel_history_item" type="relfk" layer="0"
+	 src-table="shoplist.log"
+	 dst-table="shoplist.item" reference-fk="fk_log_item_name"
+	 src-required="false" dst-required="true"/>
+
+</dbmodel>

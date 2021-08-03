@@ -1,0 +1,14 @@
+{
+  "name": "challenge-1",
+  "version": "0.0.1",
+  "description": "ST-One Challenge 1 - Shoplist CLI",
+  "main": "src/index.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}
